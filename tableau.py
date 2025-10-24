@@ -50,19 +50,15 @@ class Tableau:
         def _g(x1, x2, z1, z2) -> np.ndarray:
             result = np.zeros_like(x1, dtype=int)
             
-            # Case: x1 == 0, z1 == 0
             mask = (x1 == 0) & (z1 == 0)
             result[mask] = 0
             
-            # Case: x1 == 1, z1 == 1
             mask = (x1 == 1) & (z1 == 1)
             result[mask] = z2[mask] - x2[mask]
-            
-            # Case: x1 == 1, z1 == 0
+        
             mask = (x1 == 1) & (z1 == 0)
             result[mask] = z2[mask] * (2 * x2[mask] - 1)
             
-            # Case: x1 == 0, z1 == 1
             mask = (x1 == 0) & (z1 == 1)
             result[mask] = x2[mask] * (1 - 2 * z2[mask])
             
@@ -80,3 +76,37 @@ class Tableau:
             self.matrix[h, -1] = 0
         elif p == 2:
             self.matrix[h, -1] = 1
+
+    def CNOT(self, a: int, b: int): 
+        a -= 1
+        b -= 1
+
+        # r_i = r_i ⊕ x_ia & z_ib & (x_ib ⊕ z_ia ⊕ 1)
+        self.matrix[:, -1] = self.matrix[:, -1] ^ self.matrix[:, a] & self.matrix[:, b + self.n_qubits] & \
+        (self.matrix[:, b] ^ self.matrix[:, a + self.n_qubits] ^ 1)
+
+        # x_ib = x_ib ⊕ x_ia
+        self.matrix[:, b] ^= self.matrix[:, a]
+
+        # z_ia = z_ia ⊕ z_ib
+        self.matrix[:, a + self.n_qubits] ^= self.matrix[:, b + self.n_qubits]
+
+    def H(self, a: int): 
+        a -= 1
+
+        # r_i = r_i ⊕ x_ia & z_ia
+        self.matrix[:, -1] = self.matrix[:, -1] ^ (self.matrix[:, a] & self.matrix[:, a + self.n_qubits])
+
+        # x_ia, z_ia = z_ia, x_ia
+        self.matrix[:, a], self.matrix[:, a + self.n_qubits] = self.matrix[:, a + self.n_qubits], self.matrix[:, a]
+
+    def S(self, a: int):
+        a -= 1
+
+        # r_i = r_i ⊕ x_ia & z_ia
+        self.matrix[:, -1] = self.matrix[:, -1] ^ (self.matrix[:, a] & self.matrix[:, a + self.n_qubits])
+
+        # z_ia = z_ia ⊕ x_ia
+        self.matrix[:, a + self.n_qubits] ^= self.matrix[:, a]
+
+    

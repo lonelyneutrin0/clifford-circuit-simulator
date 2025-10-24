@@ -1,4 +1,4 @@
-# clifford-circuit-simulator
+# quantum-tableau
 Quantum circuit simulator for Clifford gate circuits in Cirq.
 
 ## Background 

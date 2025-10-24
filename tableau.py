@@ -1,4 +1,3 @@
-import cirq 
 import numpy as np 
 
 from dataclasses import dataclass 
@@ -30,7 +29,8 @@ class Tableau:
     def __init__(self, n_qubits: int): 
         self.n_qubits = n_qubits
 
-        self.matrix = np.eye((2 * n_qubits), (2 * n_qubits + 1), dtype=int)
+        self.matrix = np.eye((2 * n_qubits + 1), (2 * n_qubits + 1), dtype=int)
+        self.matrix[-1, -1] = 0
 
     def _rowsum(self, h: int, i: int): 
         """Rowsum subroutine for tableau update."""
@@ -109,4 +109,28 @@ class Tableau:
         # z_ia = z_ia ⊕ x_ia
         self.matrix[:, a + self.n_qubits] ^= self.matrix[:, a]
 
-    
+    def measure(self, a: int):
+        a -= 1
+
+        p = np.argwhere(self.matrix[self.n_qubits:, a] == 1)[0, :]
+
+        if p:
+            p_min = int(np.min(p)) + self.n_qubits
+            for i in range(2 * self.n_qubits):
+                if i != p_min:
+                    if self.matrix[i, a] == 1:
+                        self._rowsum(i + 1, p_min + 1)
+
+            self.matrix[p_min - self.n_qubits, :] = self.matrix[p_min, :]
+            self.matrix[p_min, :] = 0
+
+            self.matrix[p_min, -1] = np.random.randint(2)
+            self.matrix[p_min, a] = 1
+            
+            return self.matrix[p_min, -1]
+
+
+        for i in range(self.n_qubits):
+            self._rowsum(2 * self.n_qubits + 1, i + 1 + self.n_qubits)
+
+        return self.matrix[-1, -1]
